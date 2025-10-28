@@ -1,32 +1,38 @@
-import { StatusBar } from 'expo-status-bar';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+// Game.tsx
+import React, { useState } from 'react';
+import { View, StyleSheet, Text } from 'react-native';
+import Board from './components/Board';
 
-export default function App() {
+export default function Game() {
+  // Estado del tablero (9 posiciones, vacías al inicio)
+  const [board, setBoard] = useState<(string | null)[]>(Array(9).fill(null));
+
+  // Estado del turno actual ("X" o "O")
+  const [turn, setTurn] = useState<'X' | 'O'>('X');
+
+  // 🔹 Manejar clic en una casilla
+  const handlePressSquare = (index: number) => {
+    // Si la casilla ya tiene algo, no hacemos nada
+    if (board[index]) return;
+
+    // Crear una copia del tablero
+    const newBoard = [...board];
+    newBoard[index] = turn;
+
+    // Actualizar el estado
+    setBoard(newBoard);
+
+    // Cambiar de turno
+    setTurn(turn === 'X' ? 'O' : 'X');
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Tres en Linea</Text>
+      {/* Texto arriba para ver de quién es el turno */}
+      <Text style={styles.turnText}>Turno de: {turn}</Text>
 
-      <View style={styles.board}>
-
-        <View style={styles.row}>
-          <Pressable style={styles.button}><Text style={styles.title}>1</Text></Pressable>
-          <Pressable style={styles.button}><Text style={styles.title}>2</Text></Pressable>
-          <Pressable style={styles.button}><Text style={styles.title}>3</Text></Pressable>
-        </View>
-
-        <View style={styles.row}>
-          <Pressable style={styles.button}><Text style={styles.title}>4</Text></Pressable>
-          <Pressable style={styles.button}><Text style={styles.title}>5</Text></Pressable>
-          <Pressable style={styles.button}><Text style={styles.title}>6</Text></Pressable>
-        </View>
-
-        <View style={styles.row}>
-          <Pressable style={styles.button}><Text style={styles.title}>7</Text></Pressable>
-          <Pressable style={styles.button}><Text style={styles.title}>8</Text></Pressable>
-          <Pressable style={styles.button}><Text style={styles.title}>9</Text></Pressable>
-        </View>
-
-      </View>
+      {/* Tablero */}
+      <Board board={board} onPressSquare={handlePressSquare} />
     </View>
   );
 }
@@ -34,37 +40,11 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
   },
-
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    marginBottom: 20,
+  turnText: {
+    fontSize: 24,
+    marginBottom: 16,
   },
-
-  row: {
-    flexDirection: "row",
-    justifyContent: "center"
-  },
-
-  board: {
-    width: 375,
-    height: 375,
-    backgroundColor: "#fff",
-    borderWidth: 2,
-    borderColor: "#333",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  button: {
-    width: 125,
-    height: 125,
-    backgroundColor: "#fff",
-    borderWidth: 2,
-    borderColor: "#333",
-  }
 });
