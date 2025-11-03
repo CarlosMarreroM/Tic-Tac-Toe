@@ -1,19 +1,26 @@
-// Game.tsx
-import React, { useState } from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+// App.tsx
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, Text, Button } from 'react-native';
 import Board from './components/Board';
+import { checkWinner } from './utils/checkWinner';
 
 export default function Game() {
-  // Estado del tablero (9 posiciones, vacías al inicio)
   const [board, setBoard] = useState<(string | null)[]>(Array(9).fill(null));
-
-  // Estado del turno actual ("X" o "O")
   const [turn, setTurn] = useState<'X' | 'O'>('X');
+  const [winner, setWinner] = useState<string | null>(null);
+
+  // 🔹 Cada vez que el tablero cambie, comprobamos si hay un ganador
+  useEffect(() => {
+    const result = checkWinner(board);
+    if (result) {
+      setWinner(result);
+    }
+  }, [board]);
 
   // 🔹 Manejar clic en una casilla
   const handlePressSquare = (index: number) => {
-    // Si la casilla ya tiene algo, no hacemos nada
-    if (board[index]) return;
+    // Si la casilla ya tiene algo o ya hay ganador, no hacemos nada
+    if (board[index] || winner) return;
 
     // Crear una copia del tablero
     const newBoard = [...board];
@@ -26,13 +33,25 @@ export default function Game() {
     setTurn(turn === 'X' ? 'O' : 'X');
   };
 
+  const handleRestart = () => {
+    setBoard(Array(9).fill(null));
+    setWinner(null);
+    setTurn('X');
+  };
+
   return (
     <View style={styles.container}>
-      {/* Texto arriba para ver de quién es el turno */}
-      <Text style={styles.turnText}>Turno de: {turn}</Text>
-
-      {/* Tablero */}
+      <Text style={styles.turnText}>
+        {winner === 'draw'
+          ? 'Empate 😐'
+          : winner
+            ? `Ganó ${winner} 🎉`
+            : `Turno de: ${turn}`}
+      </Text>
       <Board board={board} onPressSquare={handlePressSquare} />
+      {winner && (
+        <Button title="Reiniciar" onPress={handleRestart} />
+      )}
     </View>
   );
 }
