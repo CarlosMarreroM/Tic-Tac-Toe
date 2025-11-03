@@ -1,52 +1,71 @@
 // utils/checkWinner.ts
 
+export type WinnerResult = {
+  winner: string | null;
+  winningPositions: number[] | null;
+};
+
 // La función recibe el tablero y el número de casillas necesarias para ganar
-export function checkWinner(board: (string | null)[], winLength = 3): string | null {
-  const size = Math.sqrt(board.length); // ejemplo: 3x3 = 9 posiciones
-  if (!Number.isInteger(size)) return null;
+export function checkWinner(
+  board: (string | null)[],
+  size: number,
+  winLength = size,
+  lastIndex: number
+): WinnerResult {
+  const getIndex = (r: number, c: number) => r * size + c;
 
-  const lines: (string | null)[][] = [];
+  const r = Math.floor(lastIndex / size);
+  const c = lastIndex % size;
+  const symbol = board[lastIndex];
+  if (!symbol) return { winner: null, winningPositions: null };
 
-  //Filas
-  for (let r = 0; r < size; r++) {
-    const row = board.slice(r * size, (r + 1) * size);
-    lines.push(row);
-  }
+  const directions = [
+    [0, 1],   // →
+    [1, 0],   // ↓
+    [1, 1],   // ↘
+    [1, -1],  // ↙
+  ];
 
-  //Columnas
-  for (let c = 0; c < size; c++) {
-    const col = [];
-    for (let r = 0; r < size; r++) {
-      col.push(board[r * size + c]);
+  for (const [dr, dc] of directions) {
+    const positions = [lastIndex];
+
+    // Mira hacia adelante
+    for (let step = 1; step < winLength; step++) {
+      const nr = r + dr * step;
+      const nc = c + dc * step;
+      if (
+        nr < 0 ||
+        nc < 0 ||
+        nr >= size ||
+        nc >= size ||
+        board[getIndex(nr, nc)] !== symbol
+      ) break;
+      positions.push(getIndex(nr, nc));
     }
-    lines.push(col);
+
+    // Mira hacia atrás (dirección contraria)
+    for (let step = 1; step < winLength; step++) {
+      const nr = r - dr * step;
+      const nc = c - dc * step;
+      if (
+        nr < 0 ||
+        nc < 0 ||
+        nr >= size ||
+        nc >= size ||
+        board[getIndex(nr, nc)] !== symbol
+      ) break;
+      positions.push(getIndex(nr, nc));
+    }
+
+    if (positions.length >= winLength) {
+      return { winner: symbol, winningPositions: positions };
+    }
   }
 
-  //Diagonal principal (↘)
-  const mainDiagonal = [];
-  for (let i = 0; i < size; i++) {
-    mainDiagonal.push(board[i * size + i]);
-  }
-  lines.push(mainDiagonal);
-
-  //Diagonal inversa (↙)
-  const reverseDiagonal = [];
-  for (let i = 0; i < size; i++) {
-    reverseDiagonal.push(board[i * size + (size - 1 - i)]);
-  }
-  lines.push(reverseDiagonal);
-
-  //Comprobar si alguna línea tiene el mismo símbolo winLength veces seguidas
-  for (const line of lines) {
-    const joined = line.join('');
-    if (joined.includes('X'.repeat(winLength))) return 'X';
-    if (joined.includes('O'.repeat(winLength))) return 'O';
-  }
-
-  // Empate (no hay nulls y nadie ganó)
+  // Empate
   if (board.every(cell => cell !== null)) {
-    return 'draw';
+    return { winner: 'draw', winningPositions: null };
   }
 
-  return null; // nadie ganó todavía
+  return { winner: null, winningPositions: null };
 }

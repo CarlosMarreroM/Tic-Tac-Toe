@@ -2,20 +2,22 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Text, Button } from 'react-native';
 import Board from './components/Board';
-import { checkWinner } from './utils/checkWinner';
+import { checkWinner, WinnerResult } from './utils/checkWinner';
 
 export default function Game() {
   const [board, setBoard] = useState<(string | null)[]>(Array(9).fill(null));
   const [turn, setTurn] = useState<'X' | 'O'>('X');
   const [winner, setWinner] = useState<string | null>(null);
+  const [winningPositions, setWinningPositions] = useState<number[] | null>(null);
 
   // 🔹 Cada vez que el tablero cambie, comprobamos si hay un ganador
-  useEffect(() => {
-    const result = checkWinner(board);
-    if (result) {
-      setWinner(result);
+  /*useEffect(() => {
+    const result: WinnerResult = checkWinner(board);
+    if (result.winner) {
+      setWinner(result.winner);
+      setWinningPositions(result.winningPositions);
     }
-  }, [board]);
+  }, [board]);*/
 
   // 🔹 Manejar clic en una casilla
   const handlePressSquare = (index: number) => {
@@ -29,13 +31,24 @@ export default function Game() {
     // Actualizar el estado
     setBoard(newBoard);
 
+    // 🔹 Comprobamos si esa jugada gana
+    const result = checkWinner(newBoard, 3, 3, index);
+
+    if (result.winner) {
+      setWinner(result.winner);
+      setWinningPositions(result.winningPositions);
+    } else {
+      setTurn(turn === 'X' ? 'O' : 'X');
+    }
+
     // Cambiar de turno
-    setTurn(turn === 'X' ? 'O' : 'X');
+    //setTurn(turn === 'X' ? 'O' : 'X');
   };
 
   const handleRestart = () => {
     setBoard(Array(9).fill(null));
     setWinner(null);
+    setWinningPositions(null);
     setTurn('X');
   };
 
@@ -48,10 +61,14 @@ export default function Game() {
             ? `Ganó ${winner} 🎉`
             : `Turno de: ${turn}`}
       </Text>
-      <Board board={board} onPressSquare={handlePressSquare} />
-      {winner && (
-        <Button title="Reiniciar" onPress={handleRestart} />
-      )}
+
+      <Board 
+        board={board} 
+        onPressSquare={handlePressSquare} 
+        winningPositions={winningPositions}
+      />
+
+      <Button title="Reiniciar" onPress={handleRestart} /> 
     </View>
   );
 }
@@ -67,3 +84,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
 });
+
+
+/**
+0,0 0,1 0,2
+1,0 1,1 1,2
+2,0 2,1 2,2
+ */
