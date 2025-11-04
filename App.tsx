@@ -48,7 +48,7 @@ export default function Game() {
     if (winner === null) {
       (turn === 'X') ? setScoreO(scoreO + 1) : setScoreX(scoreX + 1);
     }
-  
+
     setBoard(Array(9).fill(null));
     setWinner(null);
     setWinningPositions(null);
@@ -71,13 +71,13 @@ export default function Game() {
             : `Turno de: ${turn}`}
       </Text>
 
-      <Board 
-        board={board} 
-        onPressSquare={handlePressSquare} 
+      <Board
+        board={board}
+        onPressSquare={handlePressSquare}
         winningPositions={winningPositions}
       />
 
-      <Button title="Reiniciar" onPress={handleRestart} /> 
+      <Button title="Reiniciar" onPress={handleRestart} />
 
       <Button title="Estadísticas" onPress={() => setShowStats(!showStats)} />
 
