@@ -1,8 +1,8 @@
 // App.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, Text, Button } from 'react-native';
-import Board from './components/Board';
-import { checkWinner, WinnerResult } from './utils/checkWinner';
+import Board from '../components/Board';
+import { checkWinner } from '../utils/checkWinner';
 
 export default function Game() {
   const [board, setBoard] = useState<(string | null)[]>(Array(9).fill(null));
