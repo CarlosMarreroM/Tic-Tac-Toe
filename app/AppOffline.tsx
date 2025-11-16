@@ -1,4 +1,5 @@
 // App.tsx
+// Antiguo solo juego offline
 import React, { useState } from 'react';
 import { View, StyleSheet, Text, Button } from 'react-native';
 import Board from '../components/Board';

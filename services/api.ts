@@ -1,5 +1,5 @@
 // services/api.ts
-const API_URL = "http://192.168.1.47:5000";
+const API_URL = "http://192.168.1.49:5000";
 
 export async function registerDevice(alias?: string) {
   const res = await fetch(`${API_URL}/devices`, {

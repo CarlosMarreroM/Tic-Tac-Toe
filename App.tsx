@@ -2,6 +2,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, Button, StyleSheet, ActivityIndicator } from "react-native";
 import Board from "./components/Board";
+import { checkWinner } from "./utils/checkWinner";
+
 import {
     registerDevice,
     createOrJoinMatch,
@@ -17,11 +19,13 @@ export default function AppOnline() {
     const [board, setBoard] = useState<string[][]>([]);
     const [turn, setTurn] = useState<string | null>(null);
     const [winner, setWinner] = useState<string | null>(null);
+    const [winningPositions, setWinningPositions] = useState<number[] | null>(null);
     const [players, setPlayers] = useState<Record<string, string> | null>(null);
     const [loading, setLoading] = useState(true);
     const [waiting, setWaiting] = useState(false);
 
-    // === 1️⃣ Registro del jugador ===
+
+    // === Registro del jugador ===
     useEffect(() => {
         (async () => {
             const { device_id } = await registerDevice(`Jugador-${Math.floor(Math.random() * 1000)}`);
@@ -29,7 +33,7 @@ export default function AppOnline() {
         })();
     }, []);
 
-    // === 2️⃣ Crear o unirse a partida ===
+    // === Crear o unirse a partida ===
     useEffect(() => {
         if (!deviceId) return;
         (async () => {
@@ -44,7 +48,7 @@ export default function AppOnline() {
         })();
     }, [deviceId]);
 
-    // === 3️⃣ Polling: revisar si ya hay partida o cambios ===
+    // === Polling: revisar si ya hay partida o cambios ===
     useEffect(() => {
         if (!deviceId) return;
 
@@ -58,17 +62,37 @@ export default function AppOnline() {
                 }
             } else if (matchId) {
                 const state = await getMatchState(matchId);
+
                 setBoard(state.board);
                 setTurn(state.turn);
                 setWinner(state.winner);
                 setPlayers(state.players);
+
+                // === Detectar posiciones ganadoras ===
+                if (state.winner && state.winner !== "Draw") {
+                    // El backend manda board en 2D → lo plano para checkWinner
+                    const flat = state.board.flat();
+
+                    // Encontrar última jugada hecha por el ganador
+                    let lastIndex = -1;
+                    for (let i = 0; i < flat.length; i++) {
+                        if (flat[i] === state.winner) lastIndex = i;
+                    }
+
+                    const result = checkWinner(flat, state.size, state.size, lastIndex);
+
+                    setWinningPositions(result.winningPositions);
+                } else {
+                    // Si no hay ganador, no se marca nada
+                    setWinningPositions(null);
+                }
             }
         }, 1500);
 
         return () => clearInterval(interval);
     }, [deviceId, matchId, waiting]);
 
-    // === 4️⃣ Hacer movimiento ===
+    // === Hacer movimiento ===
     const handlePressSquare = useCallback(
         async (index: number) => {
             if (!matchId || !deviceId || !turn || winner) return;
@@ -85,6 +109,33 @@ export default function AppOnline() {
         },
         [board, deviceId, matchId, turn, winner]
     );
+
+    // === Reiniciar la partida ===
+    const handleRestartMatch = async () => {
+        if (!deviceId) return;
+
+        // Resetear estado local
+        setMatchId(null);
+        setBoard([]);
+        setWinner(null);
+        setTurn(null);
+        setPlayers(null);
+        setLoading(true);
+        setWaiting(false);
+
+        // Crear/Unirse a nueva partida
+        const res = await createOrJoinMatch(deviceId, 3);
+
+        if (res.status === 202) {
+            setWaiting(true);
+        } else if (res.status === 201) {
+            setMatchId(res.data.match_id);
+            setPlayers(res.data.players);
+        }
+
+        setLoading(false);
+    };
+
 
     if (loading) {
         return (
@@ -131,9 +182,12 @@ export default function AppOnline() {
             <Board
                 board={board.flat()} // tu Board usa un array 1D
                 onPressSquare={handlePressSquare}
+                winningPositions={winningPositions}
             />
 
             <Button title="Actualizar" onPress={async () => matchId && setBoard((await getMatchState(matchId)).board)} />
+            <Button title="Reiniciar" onPress={handleRestartMatch} />
+
         </View>
     );
 }
